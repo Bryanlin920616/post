@@ -1,0 +1,11 @@
+service: post
+
+api:
+  port: 9080
+  debug: true
+  test: true
+
+
+log:
+  level: debug
+  target: os
