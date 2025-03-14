@@ -2,9 +2,11 @@ package router
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/94peter/microservice/apitool"
 	"github.com/94peter/microservice/apitool/err"
+	"github.com/arwoosa/post/router/request"
 	"github.com/gin-gonic/gin"
 )
 
@@ -47,6 +49,20 @@ func (m *idea) GetHandlers() []*apitool.GinHandler {
 }
 
 func (m *idea) getIdeas(c *gin.Context) {
+	var requestBody request.CreateIdea
+	if err := c.BindJSON(&requestBody); err != nil {
+		m.GinErrorWithStatusHandler(c, http.StatusBadRequest, fmt.Errorf("invalid request body: %w", err))
+		return
+	}
+	if err := requestBody.Validate(); err != nil {
+		m.GinErrorWithStatusHandler(c, http.StatusBadRequest, err)
+		return
+	}
+
+	/*
+		// do something
+	*/
+
 	fmt.Println("get ideas")
 }
 
