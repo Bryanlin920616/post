@@ -49,6 +49,10 @@ func (m *idea) GetHandlers() []*apitool.GinHandler {
 }
 
 func (m *idea) getIdeas(c *gin.Context) {
+	fmt.Println("get ideas")
+}
+
+func (m *idea) createIdea(c *gin.Context) {
 	var requestBody request.CreateIdea
 	if err := c.BindJSON(&requestBody); err != nil {
 		m.GinErrorWithStatusHandler(c, http.StatusBadRequest, fmt.Errorf("invalid request body: %w", err))
@@ -58,15 +62,6 @@ func (m *idea) getIdeas(c *gin.Context) {
 		m.GinErrorWithStatusHandler(c, http.StatusBadRequest, err)
 		return
 	}
-
-	/*
-		// do something
-	*/
-
-	fmt.Println("get ideas")
-}
-
-func (m *idea) createIdea(c *gin.Context) {
 	fmt.Println("create idea")
 }
 
