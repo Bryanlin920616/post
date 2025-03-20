@@ -9,3 +9,6 @@ api:
 log:
   level: debug
   target: os
+
+manticore:
+  url: http://localhost:9306

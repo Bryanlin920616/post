@@ -5,6 +5,7 @@ go 1.23.3
 require (
 	github.com/94peter/microservice v0.3.0
 	github.com/gin-gonic/gin v1.10.0
+	github.com/manticoresoftware/manticoresearch-go v1.7.0
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
@@ -73,5 +74,6 @@ require (
 	google.golang.org/grpc v1.62.1 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
+	gopkg.in/validator.v2 v2.0.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

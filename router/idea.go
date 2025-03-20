@@ -3,6 +3,7 @@ package router
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/94peter/microservice/apitool"
 	"github.com/94peter/microservice/apitool/err"
@@ -49,7 +50,17 @@ func (m *idea) GetHandlers() []*apitool.GinHandler {
 }
 
 func (m *idea) getIdeas(c *gin.Context) {
-	fmt.Println("get ideas")
+	query := c.Query("q")
+	searchAfter := c.Query("search_after")
+	limit := int32(8) // 預設每頁 8 筆
+	if limitStr := c.Query("limit"); limitStr != "" {
+		if l, err := strconv.ParseInt(limitStr, 10, 32); err == nil {
+			limit = int32(l)
+		}
+	}
+
+	// TODO: 從服務層獲取搜尋結果
+	fmt.Printf("Search ideas with query: %s, searchAfter: %s, limit: %d\n", query, searchAfter, limit)
 }
 
 func (m *idea) createIdea(c *gin.Context) {

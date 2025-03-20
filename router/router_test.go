@@ -335,7 +335,7 @@ func TestUpdateIdea(t *testing.T) {
 
 			c.Request, _ = http.NewRequest("PUT", "/idea/"+test.mongoId, requestData)
 			c.Request.Header.Set("Content-Type", "application/json")
-			c.Params = []gin.Param{{Key: "mongo_id", Value: test.mongoId}}
+			c.Params = []gin.Param{{Key: "id", Value: test.mongoId}}
 
 			/* setup mock
 
