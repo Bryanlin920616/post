@@ -24,15 +24,6 @@ func (s *IdeaService) CreateIdea(data *model.IdeaData) (int64, error) {
 	return s.client.Create(s.index, data.ToMap())
 }
 
-// GetIdea 獲取指定的 idea
-/*func (s *IdeaService) GetIdea(id uint64) (*IdeaData, error) {
-	doc, err := s.client.Read(s.index, id)
-	if err != nil {
-		return nil, err
-	}
-	return IdeaFromDocument(doc)
-}*/
-
 // UpdateIdea 更新指定的 idea
 func (s *IdeaService) ReplaceIdea(id int64, data *model.IdeaData) error {
 	return s.client.Replace(s.index, id, data.ToMap())

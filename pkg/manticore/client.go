@@ -12,10 +12,9 @@ import (
 type manticore struct {
 	apiClient *Manticoresearch.APIClient
 }
-type option func(*manticore)
 
 // NewManticore 創建新的 Manticore Search 客戶端
-func NewManticore(opts ...option) (ManticoreService, error) {
+func NewManticore() (ManticoreService, error) {
 	// 創建配置
 	url := viper.GetString("manticore.url")
 	if url == "" {
@@ -23,14 +22,11 @@ func NewManticore(opts ...option) (ManticoreService, error) {
 	}
 	configuration := Manticoresearch.NewConfiguration()
 	configuration.Servers[0].URL = url
+	// allow custom http client for advanced usage
 	apiClient := Manticoresearch.NewAPIClient(configuration)
 
 	manticore := &manticore{
 		apiClient: apiClient,
-	}
-
-	for _, opt := range opts {
-		opt(manticore)
 	}
 	return manticore, nil
 }

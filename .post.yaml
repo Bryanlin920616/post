@@ -11,4 +11,4 @@ log:
   target: os
 
 manticore:
-  url: http://localhost:9306
+  url: http://localhost:9308
