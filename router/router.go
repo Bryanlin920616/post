@@ -7,6 +7,7 @@ import (
 func GetApis() []apitool.GinAPI {
 	apis := []apitool.GinAPI{
 		newIdea(),
+		newKeyword(),
 	}
 
 	return apis

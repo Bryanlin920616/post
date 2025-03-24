@@ -4,10 +4,14 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/94peter/microservice/apitool"
 	"github.com/94peter/microservice/apitool/err"
+	"github.com/arwoosa/post/model"
+	"github.com/arwoosa/post/pkg/manticore"
 	"github.com/arwoosa/post/router/request"
+	"github.com/arwoosa/post/service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -41,15 +45,11 @@ func (m *idea) GetHandlers() []*apitool.GinHandler {
 			Method:  "DELETE",
 			Handler: m.deleteIdea,
 		},
-		{
-			Path:    "/idea/autocomplete",
-			Method:  "GET",
-			Handler: m.autocomplete,
-		},
 	}
 }
 
 func (m *idea) getIdeas(c *gin.Context) {
+	// TODO: Parse query params
 	query := c.Query("q")
 	searchAfter := c.Query("search_after")
 	limit := int32(8) // 預設每頁 8 筆
@@ -64,6 +64,7 @@ func (m *idea) getIdeas(c *gin.Context) {
 }
 
 func (m *idea) createIdea(c *gin.Context) {
+	// TODO
 	var requestBody request.CreateIdea
 	if err := c.BindJSON(&requestBody); err != nil {
 		m.GinErrorWithStatusHandler(c, http.StatusBadRequest, fmt.Errorf("invalid request body: %w", err))
@@ -73,7 +74,36 @@ func (m *idea) createIdea(c *gin.Context) {
 		m.GinErrorWithStatusHandler(c, http.StatusBadRequest, err)
 		return
 	}
-	fmt.Println("create idea")
+	// 將 request 轉換為 IdeaData
+	ideaData := &model.IdeaData{
+		ID:                 uint64(requestBody.MongoId), // 使用 MongoId 作為 ID
+		IdeaID:             uint64(requestBody.MongoId),
+		ItineraryName:      requestBody.ItineraryName,
+		AttractionName:     requestBody.AttractionName,
+		Tags:               strings.Join(requestBody.Tags, ","), // 將標籤陣列轉為逗號分隔字串
+		WildMode:           requestBody.WildMode,
+		AttractionLocation: requestBody.AttractionLocation,
+		ExperienceDuration: requestBody.ExperienceDuration,
+	}
+
+	// 創建 Manticore client 和 service
+	manticoreClient, err := manticore.NewManticore()
+	if err != nil {
+		m.GinErrorHandler(c, err)
+		return
+	}
+	svc := service.NewIdeaService(manticoreClient)
+
+	// 呼叫 service 創建 idea
+	id, err := svc.CreateIdea(ideaData)
+	if err != nil {
+		m.GinErrorHandler(c, err)
+		return
+	}
+	// 返回成功結果
+	c.JSON(http.StatusCreated, gin.H{
+		"id": id,
+	})
 }
 
 func (m *idea) updateIdea(c *gin.Context) {
@@ -81,9 +111,26 @@ func (m *idea) updateIdea(c *gin.Context) {
 }
 
 func (m *idea) deleteIdea(c *gin.Context) {
-	fmt.Println("delete idea")
-}
+	// TODO
+	// 從 URL 參數獲取 ID
+	idStr := c.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		m.GinErrorWithStatusHandler(c, http.StatusBadRequest, fmt.Errorf("invalid id: %w", err))
+		return
+	}
+	// TODO: manticore client跟service是否要從context獲得，比免重複創建
+	manticoreClient, err := manticore.NewManticore()
+	if err != nil {
+		m.GinErrorHandler(c, err)
+		return
+	}
+	svc := service.NewIdeaService(manticoreClient)
 
-func (m *idea) autocomplete(c *gin.Context) {
-	fmt.Println("autocomplete idea")
+	if err := svc.DeleteIdea(id); err != nil {
+		m.GinErrorHandler(c, err)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }
