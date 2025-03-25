@@ -89,22 +89,8 @@ func (c *manticore) Delete(table string, id int64) error {
 }
 
 // Search 實現文件搜尋
-func (c *manticore) Search(table string, query string, searchAfter string, limit int32) (*SearchResult, error) {
+func (c *manticore) Search(searchRequest *Manticoresearch.SearchRequest) (*Manticoresearch.SearchResponse, error) {
 	ctx := context.Background()
-
-	searchRequest := Manticoresearch.NewSearchRequest(table)
-	searchQuery := Manticoresearch.NewSearchQuery()
-	searchQuery.QueryString = query
-	searchRequest.Query = searchQuery
-
-	// 設置分頁
-	searchRequest.Limit = &limit
-	if searchAfter != "" {
-		sort := []map[string]interface{}{
-			{"id": searchAfter},
-		}
-		searchRequest.Sort = sort
-	}
 
 	searchRes, httpRes, err := c.apiClient.SearchAPI.Search(ctx).SearchRequest(*searchRequest).Execute()
 	if err != nil {
@@ -115,32 +101,5 @@ func (c *manticore) Search(table string, query string, searchAfter string, limit
 		return nil, fmt.Errorf("search documents failed with status code: %d", httpRes.StatusCode)
 	}
 
-	// 解析結果
-	result := &SearchResult{
-		Total:       0,
-		Documents:   make([]Document, 0),
-		SearchAfter: "",
-	}
-
-	if searchRes != nil && searchRes.Hits != nil {
-		if searchRes.Hits.Total != nil {
-			result.Total = int64(*searchRes.Hits.Total)
-		}
-		if searchRes.Hits.Hits != nil {
-			for _, hit := range searchRes.Hits.Hits {
-				doc := Document{
-					ID:    int64(hit["_id"].(float64)),
-					Index: table,
-					Data:  hit["_source"].(map[string]interface{}),
-				}
-				result.Documents = append(result.Documents, doc)
-			}
-			// 設置下一頁的 search_after token
-			if len(result.Documents) > 0 {
-				result.SearchAfter = fmt.Sprintf("%d", result.Documents[len(result.Documents)-1].ID)
-			}
-		}
-	}
-
-	return result, nil
+	return searchRes, nil
 }

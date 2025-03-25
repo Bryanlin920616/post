@@ -50,8 +50,8 @@ func (m *idea) GetHandlers() []*apitool.GinHandler {
 
 func (m *idea) getIdeas(c *gin.Context) {
 	// TODO: Parse query params
-	query := c.Query("q")
-	searchAfter := c.Query("search_after")
+	query := c.Query("query")
+	scroll := c.Query("scroll")
 	limit := int32(8) // 預設每頁 8 筆
 	if limitStr := c.Query("limit"); limitStr != "" {
 		if l, err := strconv.ParseInt(limitStr, 10, 32); err == nil {
@@ -60,7 +60,19 @@ func (m *idea) getIdeas(c *gin.Context) {
 	}
 
 	// TODO: 從服務層獲取搜尋結果
-	fmt.Printf("Search ideas with query: %s, searchAfter: %s, limit: %d\n", query, searchAfter, limit)
+	manticoreClient, err := manticore.NewManticore()
+	if err != nil {
+		m.GinErrorHandler(c, err)
+		return
+	}
+	svc := service.NewIdeaService(manticoreClient)
+	searchResponse, err := svc.SearchIdeas(query, scroll, limit)
+	if err != nil {
+		m.GinErrorHandler(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, searchResponse)
 }
 
 func (m *idea) createIdea(c *gin.Context) {
@@ -77,13 +89,13 @@ func (m *idea) createIdea(c *gin.Context) {
 	// 將 request 轉換為 IdeaData
 	ideaData := &model.IdeaData{
 		ID:                 uint64(requestBody.MongoId), // 使用 MongoId 作為 ID
-		IdeaID:             uint64(requestBody.MongoId),
-		ItineraryName:      requestBody.ItineraryName,
-		AttractionName:     requestBody.AttractionName,
+		Name:               requestBody.ItineraryName,
+		Rewilding_name:     requestBody.AttractionName,
+		Rewilding_mode:     requestBody.WildMode,
+		Rewilding_location: requestBody.AttractionLocation,
 		Tags:               strings.Join(requestBody.Tags, ","), // 將標籤陣列轉為逗號分隔字串
-		WildMode:           requestBody.WildMode,
-		AttractionLocation: requestBody.AttractionLocation,
-		ExperienceDuration: requestBody.ExperienceDuration,
+		Host_message:       requestBody.HostMessage,
+		Experience_hours:   requestBody.ExperienceDuration,
 	}
 
 	// 創建 Manticore client 和 service

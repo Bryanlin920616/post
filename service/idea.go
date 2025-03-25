@@ -1,6 +1,9 @@
 package service
 
 import (
+	"fmt"
+	"net/url"
+
 	"github.com/arwoosa/post/model"
 	"github.com/arwoosa/post/pkg/manticore"
 )
@@ -35,6 +38,49 @@ func (s *IdeaService) DeleteIdea(id int64) error {
 }
 
 // SearchIdeas 搜尋 ideas
-func (s *IdeaService) SearchIdeas(query string, searchAfter string, limit int32) (*manticore.SearchResult, error) {
-	return s.client.Search(s.index, query, searchAfter, limit)
+func (s *IdeaService) SearchIdeas(query string, scroll string, limit int32) (*model.SearchResponse, error) {
+	filters := decodeQuery(query)
+
+	// 使用查詢工廠創建搜尋請求
+	factory := NewQueryFactory()
+	searchRequest, err := factory.CreateSearchRequest(filters, "idea")
+	if err != nil {
+		return nil, fmt.Errorf("創建搜尋請求失敗: %w", err)
+	}
+
+	if scroll != "" {
+		options := searchRequest.GetOptions()
+		if options == nil {
+			options = make(map[string]interface{})
+		}
+		options["scroll"] = scroll
+		searchRequest.SetOptions(options)
+	}
+
+	if limit > 0 {
+		searchRequest.SetLimit(limit)
+	}
+
+	// 執行搜尋
+	result, err := s.client.Search(searchRequest)
+	if err != nil {
+		return nil, fmt.Errorf("執行搜尋失敗: %w", err)
+	}
+
+	return model.FromManticoreResponse(result), nil
+}
+
+// decodeQuery 解析 query 參數
+func decodeQuery(query string) map[string]interface{} {
+	filters := make(map[string]interface{})
+
+	// 解析 URL Query String
+	params, _ := url.ParseQuery(query)
+
+	for key, values := range params {
+		value := values[0] // 只取第一個值
+		filters[key] = value
+	}
+
+	return filters
 }
